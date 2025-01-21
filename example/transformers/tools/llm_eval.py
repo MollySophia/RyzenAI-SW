@@ -52,6 +52,21 @@ if int(tv[1]) >= 39:
             en = time.perf_counter()
             logging.critical(f"[PROFILE] model_decoder_forward {en-st}")
             return outputs
+    
+    from modeling_rwkv6 import Rwkv6ForCausalLM
+
+    class Rwkv6ModelEval(Rwkv6ForCausalLM):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.tokenizer = None
+            self.model_name = None
+
+        def forward(self, *args, **kwargs):
+            st = time.perf_counter()
+            outputs = super().forward(*args, **kwargs)
+            en = time.perf_counter()
+            logging.critical(f"[PROFILE] model_decoder_forward {en-st}")
+            return outputs
 
 
 class OPTModelEval(OPTForCausalLM):
@@ -353,6 +368,8 @@ def perplexity(model, dataset, framework="pytorch", device="cpu"):
             layers = model.transformer.h
         elif "neox" in str(model.__class__).lower():
             layers = model.gpt_neox.layers
+        elif "rwkv" in str(model.__class__).lower():
+            layers = model.rwkv.blocks
         else:
             raise NotImplementedError(type(model))
 
@@ -911,6 +928,19 @@ def decode_prompt(
         generate_ids = model.generate(
             input_ids=input_ids_,
             attention_mask=attention_mask,
+            max_new_tokens=max_new_tokens,
+            streamer=streamer,
+            assistant_model=assistant_model,
+            do_sample=True,
+            temperature=0.6,
+            top_p=0.9,
+            pad_token_id=model.tokenizer.eos_token_id,
+        )
+        end = time.perf_counter()
+    elif "rwkv" in model.model_name:
+        start = time.perf_counter()
+        generate_ids = model.generate(
+            input_ids=input_ids_,
             max_new_tokens=max_new_tokens,
             streamer=streamer,
             assistant_model=assistant_model,

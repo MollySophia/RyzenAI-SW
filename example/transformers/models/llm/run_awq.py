@@ -63,6 +63,7 @@ supported_models = [
     "meta-llama/Meta-Llama-3-8B-Instruct",
     "meta-llama/Meta-Llama-3-8B",
     "microsoft/Phi-3-mini-4k-instruct",
+    "RWKV/rwkv-6-world-1b6"
 ]
 
 if __name__ == "__main__":
@@ -176,7 +177,7 @@ if __name__ == "__main__":
     if int(tv[1]) >= 39:
         from gemma.modeling_gemma_amd import GemmaForCausalLM
         from gemma.tokenization_gemma_amd import GemmaTokenizer
-        from llm_eval import MambaModelEval
+        from llm_eval import MambaModelEval, Rwkv6ModelEval
     else:
         if ("gemma" in args.model_name) or ("mamba" in args.model_name):
             print(
@@ -250,6 +251,7 @@ if __name__ == "__main__":
         .replace("microsoft/", "")
         .replace("mistralai/", "")
         .replace("TinyLlama/", "")
+        .replace("RWKV/", "")
     )
     qmodels_dir = "./quantized_models/"
     if not os.path.exists(qmodels_dir):
@@ -326,6 +328,18 @@ if __name__ == "__main__":
                 )
                 model.tokenizer = GemmaTokenizer.from_pretrained(
                     args.model_name, trust_remote_code=trust_remote_code
+                )
+            elif "rwkv" in args.model_name:
+                model = (
+                    Rwkv6ModelEval.from_pretrained(
+                        args.model_name,
+                        trust_remote_code=True,
+                    )
+                    .to(torch.bfloat16)
+                    .to("cpu")
+                )
+                model.tokenizer = AutoTokenizer.from_pretrained(
+                    "RWKV/rwkv-5-world-1b5", trust_remote_code=True
                 )
             else:
                 model = CausalLMModel.from_pretrained(
@@ -409,6 +423,18 @@ if __name__ == "__main__":
                 model.tokenizer = GemmaTokenizer.from_pretrained(
                     args.model_name, trust_remote_code=trust_remote_code
                 )
+            elif "rwkv" in model_short_name:
+                model = (
+                    Rwkv6ModelEval.from_pretrained(
+                        args.model_name,
+                        trust_remote_code=True,
+                    )
+                    .to(torch.bfloat16)
+                    .to("cpu")
+                )
+                model.tokenizer = AutoTokenizer.from_pretrained(
+                    "RWKV/rwkv-5-world-1b5", trust_remote_code=True
+                )
             else:
                 model = CausalLMModel.from_pretrained(
                     args.model_name,
@@ -466,6 +492,16 @@ if __name__ == "__main__":
                 ).to("cpu")
                 model.tokenizer = ChatGLMTokenizer.from_pretrained(
                     args.model_name, trust_remote_code=trust_remote_code
+                )
+                model.model_name = model_short_name
+            elif "rwkv" in args.model_name:
+                from modeling_rwkv6 import Rwkv6ForCausalLM
+                model = Rwkv6ForCausalLM.from_pretrained(
+                    args.model_name,
+                    trust_remote_code=True,
+                ).to("cpu")
+                model.tokenizer = AutoTokenizer.from_pretrained(
+                    "RWKV/rwkv-5-world-1b5", trust_remote_code=True
                 )
                 model.model_name = model_short_name
             model = torch.load(ckpt)

@@ -35,6 +35,9 @@ Add-PathToVar "$root\models\llm\qwen7b" PYTHONPATH
 Add-PathToVar "$root\models\llm\chatglm" PYTHONPATH
 Add-PathToVar "$root\models\llm\chatglm3" PYTHONPATH
 Add-PathToVar "$root\models\llm\gemma" PYTHONPATH
+Add-PathToVar "$root\models\llm\mamba" PYTHONPATH
+Add-PathToVar "$root\models\llm\phi3" PYTHONPATH
+Add-PathToVar "$root\models\llm\rwkv6" PYTHONPATH
 $env:AWQ_CACHE = "$root\ext\awq_cache"
 
 # To avoid a symlink error caused by HuggingFace's .from_pretrained() in pytest
